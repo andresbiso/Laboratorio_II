@@ -92,16 +92,16 @@ begin
     if v_edad < 3 then
         dbms_output.put_line('bebe'); 
 
-    elsif (v_edad >= 3) and (v_edad =< 5)  then
+    elsif (v_edad >= 3) and (v_edad <= 5)  then
         dbms_output.put_line('jardin');
 
-    elsif v_edad >= 6 and v_edad =< 12  then
+    elsif v_edad >= 6 and v_edad <= 12  then
         dbms_output.put_line('primaria');
 
-    elsif v_edad >= 13 and v_edad =< 17  then
+    elsif v_edad >= 13 and v_edad <= 17  then
         dbms_output.put_line('secundaria');
 
-    elsif v_edad >= 18 and v_edad =< 25  then
+    elsif v_edad >= 18 and v_edad <= 25  then
         dbms_output.put_line('universidad');
 
     else 
@@ -138,7 +138,7 @@ end loop;
 
 --for se ejecuta minimo n veces
 
-for i in 1...n loop 
+for i in 1..n loop 
     xxxx
     xxxx
     xxxx
