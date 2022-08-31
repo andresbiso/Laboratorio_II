@@ -16,18 +16,30 @@ calcular la edad y mostrar por pantalla el nivel de escolaridad
 
 >25 trabajo 
 */
-*/
 
 declare
- v_id_depto department.department_id%type;
- v_nom_depto department.name%type;
+    v_edad number(3);
+    v_fecha date;
+    v_fecha_nacimiento varchar2(10);
+    v_escolaridad varchar2(30);
 begin
- v_id_depto := :Id_Departamento;
- v_nom_depto := :Nombre;
-
- insert into department (department_id, name)
- values (v_id_depto, v_nom_depto);
-
- dbms_output.put_line('Id_Departamento: ' || v_id_depto);
- dbms_output.put_line('Nombre: ' || v_nom_depto);
-end
+    v_fecha_nacimiento := :Ingrese_fecha_nacimiento;
+    v_fecha := to_date(v_fecha_nacimiento,'dd/mm/yyyy');
+    v_edad := floor((sysdate - v_fecha)/365);
+    dbms_output.put_line('Edad:' || v_edad);
+    
+    if (v_edad < 3) then
+        v_escolaridad := 'bebe';
+    elsif (v_edad < 6) then
+        v_escolaridad := 'jardín';
+    elsif (v_edad < 13) then
+        v_escolaridad := 'primaria';
+    elsif (v_edad < 18) then
+       v_escolaridad := 'secundaria';
+    elsif (v_edad < 26) then
+        v_escolaridad := 'universidad';
+    else
+        v_escolaridad := 'trabajo';
+    end if;
+    dbms_output.put_line('Escolaridad:' || v_escolaridad);
+end;
