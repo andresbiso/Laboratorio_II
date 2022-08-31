@@ -36,10 +36,4 @@ begin
         end if;
         dbms_output.put_line('Nombre:' || c.name || ' ' || 'Límite de crédito:' || c.credit_limit || ' ' || 'Leyenda(crédito):' || v_leyenda);
     end loop;
-
-    exception
-        when no_data_found then
-            dbms_output.put_line('El vendedor ingresado no existe');
-        when too_many_rows then
-            dbms_output.put_line('Existe más de un vendedor para ese id');
 end;
