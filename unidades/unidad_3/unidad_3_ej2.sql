@@ -19,35 +19,23 @@ Leyenda crédito
 
 declare
     v_vendedor_id employee.employee_id%type;
-
-
-    type tt_cust is table of customer%rowtype index by binary_integer;
-    t_cust tt_cust;
-    l_idx binary_integer;
+    v_leyenda varchar2(10);
 begin
     v_vendedor_id := :Ingrese_codigo_vendedor;
 
-    select *
-    into t_cust
+    for c in (select *
     from customer
-    where salesperson_id = v_vendedor_id;
-
-    l_idx := t_cust.first;
-
-    while l_idx <= t_cust.last loop
-        dbms_output.put_line(l_idx||' '||t_cust(l_idx).name||' '||t_cust(l_idx).credit_limit);
-        l_idx := t_cust.next(l_idx);
+    where salesperson_id = v_vendedor_id)
+    loop
+        if (c.credit_limit < 4001) then
+            v_leyenda := 'BAJO';
+        elsif (c.credit_limit < 8501) then
+            v_leyenda := 'MEDIO';
+        else
+            v_leyenda := 'ALTO';
+        end if;
+        dbms_output.put_line('Nombre:' || c.name || ' ' || 'Límite de crédito:' || c.credit_limit || ' ' || 'Leyenda(crédito):' || v_leyenda);
     end loop;
-
-    --dbms_output.put_line(v_cliente_nombre || ' ' || v_cliente_credito);
-    /*
-    if (v_credito < 4001) then
-        v_leyenda := 'BAJO';
-    elsif (v_credito < 8501) then
-        v_leyenda := 'MEDIO';
-    else
-        v_leyenda := 'ALTO';
-    end if;*/
 
     exception
         when no_data_found then
