@@ -18,15 +18,40 @@ Leyenda crédito
 */
 
 declare
- v_id_depto department.department_id%type;
- v_nom_depto department.name%type;
+    v_vendedor_id employee.employee_id%type;
+
+
+    type tt_cust is table of customer%rowtype index by binary_integer;
+    t_cust tt_cust;
+    l_idx binary_integer;
 begin
- v_id_depto := :Id_Departamento;
- v_nom_depto := :Nombre;
+    v_vendedor_id := :Ingrese_codigo_vendedor;
 
- insert into department (department_id, name)
- values (v_id_depto, v_nom_depto);
+    select *
+    into t_cust
+    from customer
+    where salesperson_id = v_vendedor_id;
 
- dbms_output.put_line('Id_Departamento: ' || v_id_depto);
- dbms_output.put_line('Nombre: ' || v_nom_depto);
-end
+    l_idx := t_cust.first;
+
+    while l_idx <= t_cust.last loop
+        dbms_output.put_line(l_idx||' '||t_cust(l_idx).name||' '||t_cust(l_idx).credit_limit);
+        l_idx := t_cust.next(l_idx);
+    end loop;
+
+    --dbms_output.put_line(v_cliente_nombre || ' ' || v_cliente_credito);
+    /*
+    if (v_credito < 4001) then
+        v_leyenda := 'BAJO';
+    elsif (v_credito < 8501) then
+        v_leyenda := 'MEDIO';
+    else
+        v_leyenda := 'ALTO';
+    end if;*/
+
+    exception
+        when no_data_found then
+            dbms_output.put_line('El vendedor ingresado no existe');
+        when too_many_rows then
+            dbms_output.put_line('Existe más de un vendedor para ese id');
+end;
