@@ -82,7 +82,8 @@ end;
 /*
 9. Mostrar el nombre de los empleados, su comisión y un cartel que diga ¨Sin comisión¨ para aquellos empleados que tienen su comisión en nulo. 
 */
-
+select first_name , last_name , nvl(to_char(commission),'SIN COMISION')
+from employee;
 
 /*
 10. Mostrar el nombre completo de los empleados, el número de departamento y el nombre del departamento donde trabajan. 
@@ -152,7 +153,16 @@ end;
 /*
 23. Mostrar los datos de las órdenes máxima y mínima. 
 */
-
+select *
+from sales_order
+where order_id 
+in (
+    select max(order_id) from sales_order
+)
+or 
+order_id in (
+    select min(order_id) from sales_order
+);
 
 /*
 24. Mostrar la cantidad de órdenes agrupadas por cliente.  
@@ -167,7 +177,11 @@ end;
 /*
 26. Mostrar aquellos empleados que tienen dos ó más personas a su cargo. 
 */
-
+select m.last_name
+from employee e , employee m
+where e.manager_id = m.employee_id
+group by m.last_name , m.employee_id
+having count(e.employee_id) > 2;
 
 /*
 27. Desplegar el nombre del empleado más antiguo y del empleado más nuevo, (según su fecha de ingreso). 
