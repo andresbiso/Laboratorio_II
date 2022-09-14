@@ -158,7 +158,7 @@ end;
 -- ej6
 
 /*
-    raise_application_error(-20001, 'error proprio');
+    raise_application_error(-20001, 'error custom');
     -- Uno puede lanzar un error custom definido dentro de un rango de valores
 */
 declare
