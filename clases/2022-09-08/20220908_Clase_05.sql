@@ -26,7 +26,7 @@ Atributos del cursor:
 %notfound -> si mi puntero no apunta a una fila da true y sino false.
 %rowcount -> número de fila en la que estoy parador
 %isopen -> devuelve true si el cursor esta abierto y sino false.
-%usclose -> devuelve true si el cursor esta cerrado y sino false.
+%isclose -> devuelve true si el cursor esta cerrado y sino false.
 */
 
 /*
