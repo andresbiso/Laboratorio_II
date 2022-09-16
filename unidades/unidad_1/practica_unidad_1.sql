@@ -50,7 +50,7 @@ where location_id = 122
 */
 
 declare 
-    v_dep_id   department.location_id%TYPE;
+    v_dep_id department.location_id%type;
 begin
     v_dep_id := :Ingrese_id_localidad;
     select department_id, name
@@ -62,43 +62,53 @@ exception
 end;
 
 /*
-declare 
-    v_nombre    employee.first_name%TYPE;  
-    v_salario   employee.salary%TYPE;
-begin
-    select  first_name , salary
-    into    v_nombre , v_salario
-    from    employee
-    where   employee_id = 7369;
-    dbms_output.put_line('nombre: '||v_nombre||' Salario:'||v_salario);
-end;
-*/
-
-/*
 8. Mostrar el nombre y salario de los empleados que no tienen jefe. 
 */
+
+select first_name || ' ' || last_name, salary
+from employee
+where manager_id is null
 
 
 /*
 9. Mostrar el nombre de los empleados, su comisión y un cartel que diga ¨Sin comisión¨ para aquellos empleados que tienen su comisión en nulo. 
 */
-select first_name , last_name , nvl(to_char(commission),'SIN COMISION')
-from employee;
+
+select first_name || ' ' || last_name, decode(nvl(commission, 0), 0, 'Sin comisión', commission)
+from employee
 
 /*
 10. Mostrar el nombre completo de los empleados, el número de departamento y el nombre del departamento donde trabajan. 
 */
 
+select e.first_name || ' ' || e.last_name nombre_completo, d.department_id, d.name
+from employee e
+inner join department d
+on e.department_id = d.department_id
 
 /*
 11. Mostrar el nombre y apellido, la función que ejercen, el nombre del departamento y el salario de todos los empleados ordenados por su apellido. 
 */
 
+select e.first_name || ' ' || e.last_name nombre_completo, j.function, d.name nombre_departamento, e.salary
+from employee e
+inner join job j
+on e.job_id = j.job_id
+inner join department d
+on e.department_id = d.department_id
+order by e.last_name
 
 /*
 12. Para todos los empleados que cobran comisión, mostrar su nombre, el nombre del departamento donde trabajan y el nombre de la región a la que pertenece el departamento. 
 */
 
+select e.first_name || ' ' || e.last_name nombre_completo, d.name nombre_departamento, l.regional_group region
+from employee e
+inner join department d
+on e.department_id = d.department_id
+inner join location l
+on d.location_id = l.location_id
+where e.commission is not null
 
 /*
 13. Para cada empleado mostrar su id, apellido, salario y grado de salario. 
@@ -153,16 +163,7 @@ from employee;
 /*
 23. Mostrar los datos de las órdenes máxima y mínima. 
 */
-select *
-from sales_order
-where order_id 
-in (
-    select max(order_id) from sales_order
-)
-or 
-order_id in (
-    select min(order_id) from sales_order
-);
+
 
 /*
 24. Mostrar la cantidad de órdenes agrupadas por cliente.  
@@ -177,11 +178,7 @@ order_id in (
 /*
 26. Mostrar aquellos empleados que tienen dos ó más personas a su cargo. 
 */
-select m.last_name
-from employee e , employee m
-where e.manager_id = m.employee_id
-group by m.last_name , m.employee_id
-having count(e.employee_id) > 2;
+
 
 /*
 27. Desplegar el nombre del empleado más antiguo y del empleado más nuevo, (según su fecha de ingreso). 
