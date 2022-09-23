@@ -114,41 +114,71 @@ where e.commission is not null
 13. Para cada empleado mostrar su id, apellido, salario y grado de salario. 
 */
 
+select e.first_name, e.last_name, salary, sg.grade_id
+from employee e, salary_grade sg
+where e.salary between sg.lower_bound and sg.upper_bound
 
 /*
 14. Mostrar el número y nombre de cada empleado junto con el número de empleado y nombre de su jefe. 
 */
 
+select e.employee_id, e.first_name || ' ' || e.last_name nombre_completo, m.employee_id manager_id, m.first_name || ' ' || m.last_name nombre_completo_jefe
+from employee e inner join employee m
+on m.employee_id = e.manager_id
 
 /*
 15. Modificar el ejercicio anterior para mostrar también aquellos empleados que no tienen jefe.  
 */
 
+select e.employee_id, e.first_name || ' ' || e.last_name nombre_completo, m.employee_id manager_id, m.first_name || ' ' || m.last_name nombre_completo_jefe
+from employee e left join employee m
+on m.employee_id = e.manager_id
 
 /*
 16. Mostrar las órdenes de venta, el nombre del cliente al que se vendió y la descripción  de los productos. Ordenar la  consulta por nro. de orden. 
 */
 
+select so.order_id, c.name, p.description
+from sales_order so
+inner join customer c
+on so.customer_id = c.customer_id
+inner join item i
+on so.order_id = i.order_id
+inner join product p
+on i.product_id = p.product_id
+order by order_id
 
 /*
 17. Mostrar la cantidad de clientes. 
 */
 
+select count(distinct c.customer_id)
+from customer c
 
 /*
 18. Mostrar la cantidad de clientes del estado de Nueva York (NY). 
 */
 
+select count(distinct c.customer_id)
+from customer c
+where c.state = 'NY'
 
 /*
 19. Mostrar la cantidad de empleados que son jefes. Nombrar a la columna JEFES. 
 */
 
+select count(distinct m.employee_id)
+from employee e
+right join employee m
+on e.manager_id = m.employee_id
+where e.manager_id is not null
 
 /*
 20. Mostrar toda la información del empleado más antiguo. 
 */
 
+select * from employee
+where hire_date = (select min(hire_date) from employee)
 
 /*
 21. Generar un listado con el nombre completo de los empleados, el salario, y el nombre de su departamento para todos los empleados que tengan el mismo cargo que John Smith. Ordenar la salida por salario y apellido. 
