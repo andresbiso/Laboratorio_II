@@ -40,10 +40,11 @@ declare
         where sg.grade_id = p_grade_id and e.salary between sg.lower_bound and sg.upper_bound;
 begin
     v_salary := :Ingresa_Salario;
+    /*
     select fu_salary_grade(v_salary)
     into v_grade_id
     from dual;
-
+    */
     for r_emp_escala in c_emp_escala (fu_salary_grade(v_salary)) loop
             dbms_output.put_line('Employee_Id: ' || r_emp_escala.employee_id || ' Full Name: ' || r_emp_escala.first_name || ' ' || r_emp_escala.middle_initial || ' ' || r_emp_escala.last_name || ' Salary: ' || r_emp_escala.salary);
     end loop;
