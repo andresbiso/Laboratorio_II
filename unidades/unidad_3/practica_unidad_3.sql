@@ -66,9 +66,45 @@ Salto de página
 8. Usando un cursor recorrer las tablas Sales_order e Ítem para generar un listado sobre todas las órdenes y los productos que se ordenaron en ellas. Mostrar los siguientes datos: Order_id, order_date, product_id. 
 */
 
+declare
+    cursor c_order is 
+        select so.order_id, so.order_date, i.product_id
+        from sales_order so
+        inner join item i on so.order_id = i.order_id;
+begin
+    for r_order in c_order loop
+        dbms_output.put_line(r_order.order_id || ' ' || r_order.order_date || ' ' || r_order.product_id);
+    end loop;
+end;
+
 /*
 9. Escribir un bloque que reciba un código de cliente e informe el nro. de orden, la fecha de toda orden generada por él y la descripción de los productos ordenados. (Usar las tablas Sales_order, Ítem y Product). Si no hay registros desplegar un mensaje de error.  
 */
+
+declare
+    cursor c_order is 
+        select so.order_id, so.order_date, p.description
+        from sales_order so
+        inner join item i on so.order_id = i.order_id
+        inner join product p on i.product_id = p.product_id
+        where so.customer_id = 11;
+begin
+    
+    dbms_output.put_line('entrando');
+    for r_order in c_order loop
+    dbms_output.put_line('dentro');
+        if c_order%rowcount > 0 then
+             dbms_output.put_line(r_order.order_id || ' ' || r_order.order_date || ' ' || r_order.description);
+        else
+            dbms_output.put_line('No hay registros');
+        end if;
+     
+    end loop;
+dbms_output.put_line('fuera');
+    exception
+        when no_data_found then
+         dbms_output.put_line('No hay registros');
+end;
 
 /*
 10. Necesitamos tener una lista de los empleados que son candidatos a un aumento de salario en los distintos departamentos: 
