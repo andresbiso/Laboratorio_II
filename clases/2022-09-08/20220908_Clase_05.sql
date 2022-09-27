@@ -22,7 +22,7 @@ Pasos para tener un cursor:
 /*
 Atributos del cursor:
 
-%found -> si estoy apuntando, mi puntera a una fila del cursor, da true y sino false.
+%found -> si estoy apuntando, mi puntero a una fila del cursor, da true y sino false.
 %notfound -> si mi puntero no apunta a una fila da true y sino false.
 %rowcount -> número de fila en la que estoy parado.
 %isopen -> devuelve true si el cursor esta abierto y sino false.
