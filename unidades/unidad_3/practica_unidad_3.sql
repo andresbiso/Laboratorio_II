@@ -16,9 +16,119 @@ Tener en cuenta que puede haber comisiones en NULL
 Si el empleado no existe mandar un mensaje de error. 
 */
 
+declare
+    v_id_emple employee.employee_id%type;
+    v_salario_emple employee.salary%type;
+    v_incremento number(4,2) := 1.0;
+begin
+    v_id_emple := :Ingresar_Id_Empleado;
+
+    select salary
+    into v_salario_emple
+    from employee
+    where employee_id = v_id_emple;
+
+    if (v_salario_emple < 1300) then
+        v_incremento := 1.1;
+    elsif (v_salario_emple < 1501) then
+        v_incremento := 1.15;
+    else
+        v_incremento := 1.2;
+    end if;
+
+    update employee
+    set commission = nvl(commission, 0) * v_incremento
+    where employee_id = v_id_emple;
+
+    exception
+        when no_data_found then
+            dbms_output.put_line('No existe el empleado ingresado');
+end
+
 /*
 2. Modificar el ejercicio anterior para actualizar la comisión de todos los empleados de acuerdo a su sueldo usando los mismos criterios. Desplegar mensajes indicando cuantos registros fueron actualizados según cada criterio.  
 */
+
+declare
+    v_incremento number(4,2) := 1.0;
+    v_cant_diez number(3) := 0;
+    v_cant_quince number(3) := 0;
+    v_cant_veinte number(3) := 0;
+
+    cursor c_employee
+    is
+        select * 
+        from employee;
+begin
+    for r_employee in c_employee loop
+        if (r_employee.salary < 1300) then
+            v_incremento := 1.1;
+            v_cant_diez := v_cant_diez + 1;
+        elsif (r_employee.salary < 1501) then
+            v_incremento := 1.15;
+            v_cant_quince := v_cant_quince + 1;
+        else
+            v_incremento := 1.2;
+            v_cant_veinte := v_cant_veinte + 1;
+        end if;
+
+        update employee
+        set commission = nvl(commission, 0) * v_incremento
+        where employee_id = r_employee.employee_id;
+    end loop;
+
+    dbms_output.put_line('Cantidad Actualizó 10%: ' || v_cant_diez);
+    dbms_output.put_line('Cantidad Actualizó 15%: ' || v_cant_quince);
+    dbms_output.put_line('Cantidad Actualizó 20%: ' || v_cant_veinte);
+
+    exception
+        when others then
+            dbms_output.put_line('Error inesperado: ' || sqlerrm);
+end
+
+/*OR*/
+
+declare
+    v_cant_diez number(3) := 0;
+    v_cant_quince number(3) := 0;
+    v_cant_veinte number(3) := 0;
+begin
+
+    select count(distinct employee_id)
+    into v_cant_diez
+    from employee
+    where salary < 1300;
+
+    update employee
+    set commission = nvl(commission, 0) * 1.1
+    where salary < 1300;
+
+    select count(distinct employee_id)
+    into v_cant_quince
+    from employee
+    where salary >= 1300 AND salary <= 1500;
+
+    update employee
+    set commission = nvl(commission, 0) * 1.15
+    where salary >= 1300 AND salary <= 1500;
+
+    select count(distinct employee_id)
+    into v_cant_veinte
+    from employee
+    where salary > 1500;
+
+    update employee
+    set commission = nvl(commission, 0) * 1.2
+    where salary > 1500;
+
+    dbms_output.put_line('Cantidad Actualizó 10%: ' || v_cant_diez);
+    dbms_output.put_line('Cantidad Actualizó 15%: ' || v_cant_quince);
+    dbms_output.put_line('Cantidad Actualizó 20%: ' || v_cant_veinte);
+
+    exception
+        when others then
+            dbms_output.put_line('Error inesperado: ' || sqlerrm);
+end
 
 /*
 3. Crear un bloque Pl/Sql que permita dar de baja cargos que ya no se usan (usar la tabla JOB): 
@@ -66,45 +176,9 @@ Salto de página
 8. Usando un cursor recorrer las tablas Sales_order e Ítem para generar un listado sobre todas las órdenes y los productos que se ordenaron en ellas. Mostrar los siguientes datos: Order_id, order_date, product_id. 
 */
 
-declare
-    cursor c_order is 
-        select so.order_id, so.order_date, i.product_id
-        from sales_order so
-        inner join item i on so.order_id = i.order_id;
-begin
-    for r_order in c_order loop
-        dbms_output.put_line(r_order.order_id || ' ' || r_order.order_date || ' ' || r_order.product_id);
-    end loop;
-end;
-
 /*
 9. Escribir un bloque que reciba un código de cliente e informe el nro. de orden, la fecha de toda orden generada por él y la descripción de los productos ordenados. (Usar las tablas Sales_order, Ítem y Product). Si no hay registros desplegar un mensaje de error.  
 */
-
-declare
-    cursor c_order is 
-        select so.order_id, so.order_date, p.description
-        from sales_order so
-        inner join item i on so.order_id = i.order_id
-        inner join product p on i.product_id = p.product_id
-        where so.customer_id = 11;
-begin
-    
-    dbms_output.put_line('entrando');
-    for r_order in c_order loop
-    dbms_output.put_line('dentro');
-        if c_order%rowcount > 0 then
-             dbms_output.put_line(r_order.order_id || ' ' || r_order.order_date || ' ' || r_order.description);
-        else
-            dbms_output.put_line('No hay registros');
-        end if;
-     
-    end loop;
-dbms_output.put_line('fuera');
-    exception
-        when no_data_found then
-         dbms_output.put_line('No hay registros');
-end;
 
 /*
 10. Necesitamos tener una lista de los empleados que son candidatos a un aumento de salario en los distintos departamentos: 
