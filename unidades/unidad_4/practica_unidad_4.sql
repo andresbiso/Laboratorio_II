@@ -62,6 +62,40 @@ end
 3.	Crear un procedimiento Lista_Emp que recibe mediante un parámetro el código de un departamento e informe el nombre y apellido de todos los empleados que trabajan en él. 
 Contemplar todos los errores posibles: el código no corresponde a un departamento, no hay empleados en el departamento o cualquier error y desplegar mensajes. 
 */
+
+create or replace procedure pr_lista_emp
+    (pi_id_depto in department.department_id%type)
+is
+    cursor c_employee
+    is 
+        select first_name, last_name
+        from employee
+        where department_id = pi_id_depto;
+
+    v_i number := 0;
+    begin
+
+    for r_employee in c_employee loop
+        dbms_output.put_line('First Name: ' || r_employee.first_name || ' Last Name: ' || r_employee.last_name);
+        v_i := c_employee%rowcount;
+    end loop;
+
+    if v_i = 0 then
+        dbms_output.put_line('No hay empleados en el departamento');
+    end if;
+
+    exception
+        when no_data_found then
+            dbms_output.put_line('El departamento ingresado no existe');
+        when others then
+            dbms_output.put_line('Error inesperado: ' || sqlerrm);
+
+    end
+
+    begin
+        pr_lista_emp(10);
+    end
+
 /*
 4.	Crear un procedimiento Consulta_Precio que recibe un código de producto y devuelve el precio de lista (List_price) y el precio_mínimo (Min_price).
 ­	Si el producto no existe, atrapar la excepción correspondiente y emitir un mensaje de error.
@@ -101,6 +135,30 @@ end
 ­	Probar la función desde SqlDeveloper o usando un bloque anónimo.
 */
 
+create or replace function fu_q_credit
+    (p_id_clie customer.customer_id%type)
+    return customer.credit_limit%type
+is
+    v_limit customer.credit_limit%type;
+    begin
+        select credit_limit
+        into v_limit
+        from customer
+        where customer_id = p_id_clie;
+
+        return v_limit;
+
+        exception
+            when no_data_found then
+                return null;
+            when others then
+                dbms_output.put_line('Error inesperado: ' || sqlerrm);
+
+    end
+
+begin
+    dbms_output.put_line(nvl(to_char(fu_q_credit(100)), 'Null'));
+end
 
 /*
 6.	Crear una función Valida_Loc que recibe un código de localidad y devuelve TRUE si el código existe en la tabla Location, en caso contrario devuelve FALSE.
@@ -137,9 +195,59 @@ begin
 end;
 
 /*
-7.	Crear un procedimiento New_Dept para insertar una fila en la tabla Department. Este procedimiento recibe como parámetros el id, (Department_id), el nombre (Name) y la localidad (Location_id). Para insertar el departamento se debe validar que el código de localidad sea válido usando la función Valida_Loc. Si la localidad es inválida cancelar el procedimiento con un mensaje se error.
+7.	Crear un procedimiento New_Dept para insertar una fila en la tabla Department.
+Este procedimiento recibe como parámetros el id (Department_id), el nombre (Name) y la localidad (Location_id).
+Para insertar el departamento se debe validar que el código de localidad sea válido usando la función Valida_Loc.
+Si la localidad es inválida cancelar el procedimiento con un mensaje se error.
 */
+
+create or replace procedure pr_new_dept
+    (pi_id_dept in department.department_id%type,
+    pi_nombre in department.name%type,
+    pi_id_loc in department.location_id%type)
+is
+    begin
+        if fu_valida_loc(pi_id_loc) then
+            insert into department (department_id, name, location_id)
+            values (pi_id_dept, upper(pi_nombre), pi_id_loc);
+        else
+            raise_application_error(-20001, 'La localidad no es válida');
+        end if;
+
+        exception
+            when dup_val_on_index then
+                dbms_output.put_line('Ya existe un departamento con ese id');
+            when others then
+                dbms_output.put_line('Error inesperado: ' || sqlerrm);
+    end
+
+begin
+    pr_new_dept(90, 'prueba', 1);
+end
+
+/*delete from department where department_id in (90,91);*/
+
 /*
 8.	Crear una función Iva que reciba una valor y devuelva el mismo aplicándole el 21%.
-­	Usar esta función para desplegar los datos de las órdenes de venta (Sales_order), mostrar todas las columnas más una columna que muestre el total de la orden aplicándole el iva.
+­	Usar esta función para desplegar los datos de las órdenes de venta (Sales_order),
+mostrar todas las columnas más una columna que muestre el total de la orden aplicándole el iva.
 */
+
+create or replace function fu_agregar_iva
+    (p_total sales_order.total%type)
+    return sales_order.total%type
+is
+    co_iva constant number(3, 2) := 0.21;
+    begin
+        return p_total + p_total * co_iva;
+    end
+
+declare
+    cursor c_sales_order
+    is
+        select * from sales_order;
+begin
+    for r_sales_order in c_sales_order loop 
+        dbms_output.put_line('Order_Id: ' || r_sales_order.order_id || ' Order_Date: ' || r_sales_order.order_date || ' Customer_Id: ' || r_sales_order.customer_id || ' Ship_Date: ' || r_sales_order.ship_date || ' Total: ' || r_sales_order.total || ' Total_+_Iva: ' || fu_agregar_iva(r_sales_order.total));
+    end loop;
+end
