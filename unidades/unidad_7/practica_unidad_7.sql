@@ -21,6 +21,110 @@ d. El departamento en el que inicialmente se incorpora un empleado es el mismo e
 
 e. El salario del empleado inicialmente debe ser igual al salario mínimo de ese cargo y departamento.
 */
+create or replace package PA_EMP_PACK as
+    procedure pr_alta_emp(pi_employee_id employee.employee_id%type,
+        pi_first_name employee.first_name%type,
+        pi_last_name employee.last_name%type,
+        pi_job_id job.job_id%type,
+        pi_manager_id employee.manager_id%type,
+        pi_hire_date employee.hire_date%type default sysdate);
+end;
+create or replace package body PA_EMP_PACK is
+    function fu_valida_job (pi_job_id job.job_id%type)
+        return boolean
+    is
+        l_job_id job.job_id%type;
+
+        begin
+            select job_id
+            into l_job_id
+            from job
+            where job_id = pi_job_id;
+
+            return true;
+
+            exception
+                when no_data_found then
+                    return false;
+                when others then
+                    return false;
+        end;
+
+    function fu_valida_jefe (pi_manager_id employee.manager_id%type)
+        return boolean
+    is
+        l_manager_id number := 0;
+
+        begin
+            select count(employee_id)
+            into l_manager_id
+            from employee
+            where manager_id = pi_manager_id;
+
+            return l_manager_id > 0;
+
+            exception
+                when no_data_found then
+                    return false;
+                when others then
+                    return false;
+        end;
+
+    procedure pr_alta_emp(pi_employee_id employee.employee_id%type,
+        pi_first_name employee.first_name%type,
+        pi_last_name employee.last_name%type,
+        pi_job_id job.job_id%type,
+        pi_manager_id employee.manager_id%type,
+        pi_hire_date employee.hire_date%type default sysdate)
+    as
+        emplo_dept employee.department_id%type;
+        emplo_salary employee.salary%type;
+
+        e_job_noex exception;
+        e_manager_noex exception;
+        pragma exception_init(e_job_noex, -20001);
+        pragma exception_init(e_manager_noex, -20002);
+    begin
+        if not fu_valida_job(pi_job_id) then
+            raise_application_error(-20001, 'El job ingresado no existe');
+        end if;
+        if not fu_valida_jefe(pi_manager_id) then
+             raise_application_error(-20002, 'El jefe ingresado no existe');
+        end if;
+
+        select department_id
+        into emplo_dept
+        from employee
+        where employee_id = pi_manager_id;
+
+        select min(salary)
+        into emplo_salary
+        from employee
+        where job_id = pi_job_id and department_id = emplo_dept;
+
+        insert into employee (employee_id, last_name, first_name, middle_initial, job_id, manager_id, hire_date, salary, commission, department_id)
+        values (pi_employee_id, pi_last_name, pi_first_name, null, pi_job_id, pi_manager_id, pi_hire_date, emplo_salary, null, emplo_dept);
+        
+         dbms_output.put_line('El empleado fue creado con éxito');
+
+        exception
+            when e_job_noex then
+                dbms_output.put_line('El job ingresado no existe');
+            when e_manager_noex then
+                dbms_output.put_line('El jefe ingresado no existe');
+            when dup_val_on_index then
+                dbms_output.put_line('El empleado ya existe');
+            when others then
+                dbms_output.put_line('Error inesperado: ' || sqlerrm);
+    end pr_alta_emp;
+end PA_EMP_PACK;
+
+begin
+    PA_EMP_PACK.pr_alta_emp(56,'john','diaz',668,7902);
+end
+
+-- select * from employee where employee_id = 56
+-- delete from employee where employee_id = 56
 
 /*
 2. Hacer las siguientes modificaciones al ejercicio anterior: (sobrecarga)
