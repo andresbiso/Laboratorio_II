@@ -1,0 +1,201 @@
+Package para Administrar las Ventas.
+
+-> Alta de una orden
+-> Alta de sus items
+-> Buscar un precio
+-> Listar las ordenes
+-> Actualizar precios
+
+PA_ORDENES
+-> procedimiento Alta ordenes (insert en la sales_order)
+                      <- id_cliente
+                      -> id_orden generado
+                    sales_order
+                      -> order_id -> calcular max+1
+                      -> order_date -> sysdate
+                      -> ship_date -> sysdate + 7
+                      -> customer_id -> (parametro)
+                      -> total --calcular
+
+--**************************************************************************************************
+--**************************************************************************************************
+
+create or replace package pa_ordenes as
+  procedure pr_alta (pi_id_cli in sales_order.customer_id%type,
+                     po_id_order out sales_order.order_id%type);
+
+ procedure pr_alta_item(pi_id_order IN sales_order.order_id%type,
+                        pi_prod_id  IN product.product_id%type,
+                        pi_cantidad IN item.quantity%type );
+
+ procedure pr_alta_item(pi_id_order IN sales_order.order_id%type,
+                        pi_prod_desc  IN product.description%type,
+                        pi_cantidad IN item.quantity%type );
+
+
+end pa_ordenes;
+
+
+--**************************************************************************************************
+--**************************************************************************************************
+
+create or replace package body pa_ordenes as
+
+    function fu_prod_id(pi_prod_desc in product.description%type)
+                        return product.product_id%type is
+          
+            l_prod_id product.product_id%type;
+          begin
+              select product_id
+              into l_prod_id
+              from product
+              where upper(description) = upper(pi_prod_desc);
+              return l_prod_id;
+              exception
+                when no_data_found then
+                  raise_application_error(-20001,'Producto No Existente ');
+                when too_many_rows then  
+                  raise_application_error(-20002,'Mas de un producto con el mismo nombre ');
+                when others then
+                  raise_application_error(-20003,'error inesperado '||sqlerrm);
+         
+      end fu_prod_id;  
+
+--**************************************************************************************************
+--**************************************************************************************************
+
+    procedure pr_alta (pi_id_cli in sales_order.customer_id%type,
+                         po_id_order out sales_order.order_id%type)
+    is
+
+    l_max_id sales_order.order_id%type;
+    e_cli_inval exception;
+    pragma exception_init(e_cli_inval,-2291);
+
+    begin
+        select max(order_id) + 1
+        into l_max_id
+        from sales_order;
+
+        insert
+        into sales_order
+          (order_id, order_date , customer_id , ship_date , total)
+        values
+          (l_max_id , sysdate , pi_id_cli , sysdate+7 , 0);
+
+        po_id_order := l_max_id;
+
+        exception
+          when e_cli_inval then
+            dbms_output.put_line('Cliente Invalido');
+          when others then
+            dbms_output.put_line('Error Inesperado '|| sqlerrm );  
+    end pr_alta;
+
+--**************************************************************************************************
+--**************************************************************************************************
+
+    procedure pr_alta_item(pi_id_order IN sales_order.order_id%type,
+                            pi_prod_id  IN product.product_id%type,
+                            pi_cantidad IN item.quantity%type ) is
+      l_max_item item.item_id%type;  
+      l_precio  price.list_price%type;   
+      e_sin_orden  exception;
+      pragma exception_init(e_sin_orden,-2291);                 
+    begin
+        --valida
+        -- ordern inexistent0     2
+        -- producto inexistente    1
+        -- cantidad negativa
+        -- sin precio
+        if pi_cantidad <= 0  then
+          dbms_output.put_line('La cantidad no puede ser negativa');
+        else    
+            select nvl(max(item_id),0) + 1
+            into l_max_item
+            from item
+            where order_id = pi_id_order;
+
+            select list_price
+            into  l_precio
+            from price
+            where product_id = pi_prod_id
+            and  end_date is null;
+
+          insert into
+          item
+            (order_id,
+              item_id,
+              product_id,
+              quantity,
+              actual_price,
+              total)
+            values
+              (pi_id_order,
+              l_max_item,
+              pi_prod_id,
+              pi_cantidad,
+              l_precio, -- averiguar precio
+              pi_cantidad* l_precio
+              );   
+              dbms_output.put_line('Se dio de alta el item  '||l_max_item); 
+            update sales_order
+            set total = total  +   pi_cantidad* l_precio
+            where order_id = pi_id_order;
+          
+        end if;     
+    EXCEPTION
+      WHEN no_data_found then
+              dbms_output.put_line('No existe el producto indicado o no tiene precio ');
+      when e_sin_orden then 
+              dbms_output.put_line('No existe la orden indicada');
+      when others then
+              dbms_output.put_line('Se produjo un error inesperado '||sqlerrm);
+    end;
+
+--**************************************************************************************************
+--**************************************************************************************************
+
+    procedure pr_alta_item(pi_id_order IN sales_order.order_id%type,
+                            pi_prod_desc  IN product.description%type,
+                            pi_cantidad IN item.quantity%type ) is
+      l_prod_id product.product_id%type; 
+      e_prod_inex exception;
+      e_prod_muchos exception;
+      e_prod_otros  exception;
+      pragma exception_init(e_prod_inex,-20001);                 
+      pragma exception_init(e_prod_muchos,-20002);    
+      pragma exception_init(e_prod_otros,-20003);    
+    begin
+      
+      l_prod_id := fu_prod_id (pi_prod_desc);
+      pr_alta_item ( pi_id_order , l_prod_id , pi_cantidad );
+      exception
+        when e_prod_inex then
+          dbms_output.put_line('No existe el producto indicado ');
+      when e_prod_muchos then
+          dbms_output.put_line('Existen muchos productos con la misma descripcion ');
+      when e_prod_otros then
+          dbms_output.put_line('Error Inesperado '|| sqlerrm);
+    end;
+
+end pa_ordenes;
+
+
+--**************************************************************************************************
+--***************************************************************************************************
+--Pruebo PKG
+
+declare
+  p_salida sales_order.order_id%type;
+
+begin
+  --pa_ordenes.pr_alta(100,p_salida);
+  --dbms_output.put_line('Orden Generada: ' || p_salida);
+pa_ordenes.pr_alta_item(622,'ACE TENNIS RACKET II',60);
+
+end;
+
+select * from sales_order where customer_id=104;
+
+select * from item where order_id=622;
