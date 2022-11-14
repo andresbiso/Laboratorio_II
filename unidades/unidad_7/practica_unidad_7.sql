@@ -287,7 +287,7 @@ create or replace package body PA_EMP_PACK is
             when e_no_data then
                 dbms_output.put_line('No existe el cargo');
             when e_too_many then
-                dbms_output.put_line('Existe m{as de un cargo con ese nombre');
+                dbms_output.put_line('Existe más de un cargo con ese nombre');
             when e_other then
                 dbms_output.put_line('Error inesperado: ' || sqlerrm);
     end pr_alta_emp;
@@ -319,6 +319,106 @@ Se puede? Como se puede solucionar para no modificar la especificación?
 */
 
 /*
+Que modificación habría que hacer para que la variable G_id sea global pero no pública?
+Se agrega la variable al obdy pero no a la especificación del paquete
+*/
+
+/*
+­Agregar el procedimiento Del_Job por ahora solamente en la especificación del paquete.
+Se puede?
+No, si agrego un procedure a la especificación debo agregarlo al body.
+Como se puede solucionar para no modificar la especificación?
+Se puede agregar al body una implementación con null en el cuerpo del procedure o que devuelva un mensaje indicando que no está implementado
+*/
+
+create or replace package PA_ABM_JOB as
+    procedure pr_alta_job (pi_cargo in job.function%type);
+    procedure pr_mod_job (pi_id_job in job.job_id%type, pi_cargo in job.function%type);
+    procedure pr_del_job (pi_id_job in job.job_id%type);
+end PA_ABM_JOB
+create or replace package body PA_ABM_JOB as
+    g_id job.job_id%type;
+
+    procedure pr_alta_job
+        (pi_cargo in job.function%type)
+    is
+    begin
+        insert into job(job_id, function)
+        values (g_id + 1, upper(pi_cargo));
+
+        g_id := g_id + 1;
+
+        dbms_output.put_line('El cargo ' || pi_cargo || ' fue insertado con éxito');
+
+        exception
+            when others then
+                dbms_output.put_line('Error inesperado: ' || sqlerrm);
+    end pr_alta_job;
+
+    procedure pr_mod_job
+        (pi_id_job in job.job_id%type,
+            pi_cargo in job.function%type)
+    is
+        v_i number := 0;
+    begin
+        select count(*) into v_i from job where job_id = pi_id_job;
+
+        if v_i = 0 then
+            raise_application_error(-20001, 'El job ingresado no existe');
+        end if;
+
+        update job
+        set function = upper(pi_cargo)
+        where job_id = pi_id_job;
+
+        if (sql%rowcount > 0) then
+            dbms_output.put_line('El cargo fue actualizado con éxito a ' || pi_cargo);
+        end if;
+
+        exception
+            when no_data_found then
+                dbms_output.put_line('El job ingresado no existe');
+            when others then
+                dbms_output.put_line('Error inesperado: ' || sqlerrm);
+    end pr_mod_job;
+
+    procedure pr_del_job (pi_id_job in job.job_id%type)
+    is
+    begin
+        delete from job
+        where job_id = pi_id_job;
+
+        if (sql%rowcount > 0) then
+            dbms_output.put_line('El cargo fue eliminado con éxito');
+        end if;
+
+        exception
+                when no_data_found then
+                    dbms_output.put_line('El job ingresado no existe');
+                when others then
+                    dbms_output.put_line('Error inesperado: ' || sqlerrm);
+    end pr_del_job;
+
+    begin
+        select nvl(max(job_id), 0)
+        into g_id
+        from job;
+end PA_ABM_JOB;
+
+begin
+    PA_ABM_JOB.pr_alta_job('estudiante');
+    PA_ABM_JOB.pr_alta_job('estudiante2');
+    PA_ABM_JOB.pr_alta_job('estudiante3');
+    PA_ABM_JOB.pr_mod_job(673, 'prueba');
+end
+
+begin
+    PA_ABM_JOB.pr_del_job(674);
+    PA_ABM_JOB.pr_del_job(675);
+    PA_ABM_JOB.pr_del_job(676);
+end
+
+/*
 4. Crear un paquete CLIENTES con las siguientes consignas:
 
 ­ Una tabla Pl/Sql t_cli: con el nombre, id, teléfono y cantidad de órdenes de todos los clientes ordenados alfabéticamente.
@@ -334,6 +434,28 @@ Esta tabla debe ser cargada usando Bulk Collect en un bloque One_Time_Only.
 Si el cliente no existe provocar una excepción.
 */
 
+create or replace package PA_CLIENTES as
+end PA_CLIENTES;
+create or replace package body PA_CLIENTES as
+    type tr_clientes is record (
+        cli_name customer.name%type,
+        cli_id customer.customer_id%type,
+        cli_phone customer.phone_number%type,
+        cli_orders number(4)
+    );
+
+    type tt_clientes is table of tr_clientes indyex by binary_integer;
+
+    t_cli tt_clientes;
+
+    begin
+        select 
+        bulk collect into t_cli
+        from
+        where
+        order by name asc
+
+end PA_CLIENTES;
 /*
 5. Crear un paquete SHOW_DATOS con dos procedimientos públicos:
 Show_Emp y Show_Dept para desplegar los datos de los empleados y de los departamentos.
