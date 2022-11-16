@@ -629,3 +629,27 @@ where department_id in (select department_id from department
 
 where location_id =LOC(i));
 */
+
+create or replace package PA_SHOW_DATOS as
+    type tr_loc is record (
+        loc_reg_grp location.regional_group%Type
+    );
+    type tt_loc is table of tr_loc index by binary_integer;
+    t_loc tt_loc;
+
+    procedure pr_show_dept;
+    procedure pr_show_emp;
+end PA_SHOW_DATOS;
+create or replace package body PA_SHOW_DATOS as
+    cursor c_loc is
+        select location_id, regional_group
+        from location;
+    begin
+        for r_loc in c_loc loop
+            t_loc(r_loc.location_id).loc_reg_grp := r_loc.regional_group;
+        end loop;
+end PA_SHOW_DATOS;
+
+begin
+    dbms_output.put_line(PA_SHOW_DATOS.t_loc);
+end
