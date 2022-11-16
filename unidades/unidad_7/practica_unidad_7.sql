@@ -436,6 +436,9 @@ Si el cliente no existe provocar una excepción.
 
 create or replace package PA_CLIENTES as
     procedure pr_lista;
+    procedure pr_lista(pi_cli_nombre in customer.name%type);
+    procedure pr_lista(pi_cli_id in customer.customer_id%type);
+    procedure pr_ordenes(pi_num in number);
 end PA_CLIENTES;
 create or replace package body PA_CLIENTES as
     type tr_clientes is record (
@@ -448,6 +451,44 @@ create or replace package body PA_CLIENTES as
     type tt_clientes is table of tr_clientes index by binary_integer;
 
     t_cli tt_clientes;
+
+    function fu_valida_cli(p_id customer.customer_id%type)
+    return binary_integer
+    as
+        l_idx binary_integer;
+    begin
+
+        l_idx := t_cli.first;
+
+        while l_idx <= t_cli.last loop
+            if t_cli(l_idx).customer_id = p_id then
+                return l_idx;
+            end if;
+            l_idx := t_cli.next(l_idx);
+        end loop;
+        
+        raise_application_error(-20001, 'El cliente ingresado no existe');
+        
+    end fu_valida_cli;
+
+    function fu_valida_cli(p_nombre customer.name%type)
+    return binary_integer
+    as
+        l_idx binary_integer;
+    begin
+
+        l_idx := t_cli.first;
+
+        while l_idx <= t_cli.last loop
+            if upper(t_cli(l_idx).name) = upper(p_nombre) then
+                return l_idx;
+            end if;
+            l_idx := t_cli.next(l_idx);
+        end loop;
+        
+        raise_application_error(-20001, 'El cliente ingresado no existe');
+        
+    end fu_valida_cli;
 
     procedure pr_lista
     as
@@ -467,6 +508,63 @@ create or replace package body PA_CLIENTES as
         end loop;
 
     end pr_lista;
+
+    procedure pr_lista(pi_cli_nombre in customer.name%type)
+    as
+        e_cli_noex exception;
+        pragma exception_init(e_cli_noex, -20001);
+
+        l_idx binary_integer;
+    begin
+        l_idx := fu_valida_cli(pi_cli_nombre);
+
+          dbms_output.put_line(l_idx
+            || ' Id: ' || t_cli(l_idx).cli_id
+            || ' Nombre: ' || t_cli(l_idx).cli_name
+            || ' Teléfono: ' || t_cli(l_idx).cli_phone
+            || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
+
+        exception
+            when e_cli_noex then
+                dbms_output.put_line('El cliente ingresado no existe');
+    end pr_lista;
+
+    procedure pr_lista(pi_cli_id in customer.customer_id%type)
+    as
+        e_cli_noex exception;
+        pragma exception_init(e_cli_noex, -20001);
+
+        l_idx binary_integer;
+    begin
+        l_idx := fu_valida_cli(pi_cli_id);
+
+          dbms_output.put_line(l_idx
+            || ' Id: ' || t_cli(l_idx).cli_id
+            || ' Nombre: ' || t_cli(l_idx).cli_name
+            || ' Teléfono: ' || t_cli(l_idx).cli_phone
+            || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
+
+        exception
+            when e_cli_noex then
+                dbms_output.put_line('El cliente ingresado no existe');
+    end pr_lista;
+
+    procedure pr_ordenes(pi_num in number)
+    as
+        l_idx binary_integer;
+    begin
+    l_idx := t_cli.first;
+
+        while l_idx <= t_cli.last loop
+            if t_cli(l_idx).cli_orders > pi_num then
+                dbms_output.put_line(l_idx
+                || ' Id: ' || t_cli(l_idx).cli_id
+                || ' Nombre: ' || t_cli(l_idx).cli_name
+                || ' Teléfono: ' || t_cli(l_idx).cli_phone
+                || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
+            end if;
+        l_idx := t_cli.next(l_idx);
+    end pr_ordenes;
 
     begin
         select c.name, c.customer_id, c.phone_number, count(distinct so.order_id)
