@@ -453,7 +453,7 @@ create or replace package body PA_CLIENTES as
     t_cli tt_clientes;
 
     function fu_valida_cli(p_id customer.customer_id%type)
-    return binary_integer
+        return binary_integer
     as
         l_idx binary_integer;
     begin
@@ -461,7 +461,7 @@ create or replace package body PA_CLIENTES as
         l_idx := t_cli.first;
 
         while l_idx <= t_cli.last loop
-            if t_cli(l_idx).customer_id = p_id then
+            if t_cli(l_idx).cli_id = p_id then
                 return l_idx;
             end if;
             l_idx := t_cli.next(l_idx);
@@ -472,7 +472,7 @@ create or replace package body PA_CLIENTES as
     end fu_valida_cli;
 
     function fu_valida_cli(p_nombre customer.name%type)
-    return binary_integer
+        return binary_integer
     as
         l_idx binary_integer;
     begin
@@ -480,7 +480,7 @@ create or replace package body PA_CLIENTES as
         l_idx := t_cli.first;
 
         while l_idx <= t_cli.last loop
-            if upper(t_cli(l_idx).name) = upper(p_nombre) then
+            if upper(t_cli(l_idx).cli_name) = upper(p_nombre) then
                 return l_idx;
             end if;
             l_idx := t_cli.next(l_idx);
@@ -518,11 +518,11 @@ create or replace package body PA_CLIENTES as
     begin
         l_idx := fu_valida_cli(pi_cli_nombre);
 
-          dbms_output.put_line(l_idx
-            || ' Id: ' || t_cli(l_idx).cli_id
-            || ' Nombre: ' || t_cli(l_idx).cli_name
-            || ' Teléfono: ' || t_cli(l_idx).cli_phone
-            || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
+        dbms_output.put_line(l_idx
+        || ' Id: ' || t_cli(l_idx).cli_id
+        || ' Nombre: ' || t_cli(l_idx).cli_name
+        || ' Teléfono: ' || t_cli(l_idx).cli_phone
+        || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
 
         exception
             when e_cli_noex then
@@ -538,11 +538,11 @@ create or replace package body PA_CLIENTES as
     begin
         l_idx := fu_valida_cli(pi_cli_id);
 
-          dbms_output.put_line(l_idx
-            || ' Id: ' || t_cli(l_idx).cli_id
-            || ' Nombre: ' || t_cli(l_idx).cli_name
-            || ' Teléfono: ' || t_cli(l_idx).cli_phone
-            || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
+        dbms_output.put_line(l_idx
+        || ' Id: ' || t_cli(l_idx).cli_id
+        || ' Nombre: ' || t_cli(l_idx).cli_name
+        || ' Teléfono: ' || t_cli(l_idx).cli_phone
+        || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
 
         exception
             when e_cli_noex then
@@ -563,7 +563,8 @@ create or replace package body PA_CLIENTES as
                 || ' Teléfono: ' || t_cli(l_idx).cli_phone
                 || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
             end if;
-        l_idx := t_cli.next(l_idx);
+            l_idx := t_cli.next(l_idx);
+        end loop;
     end pr_ordenes;
 
     begin
@@ -579,6 +580,9 @@ end PA_CLIENTES;
 
 begin
    PA_CLIENTES.pr_lista();
+   --PA_CLIENTES.pr_lista(208);
+   --PA_CLIENTES.pr_lista('CENTURY SHOP');
+   --PA_CLIENTES.pr_ordenes(1);
 end
 /*
 5. Crear un paquete SHOW_DATOS con dos procedimientos públicos:
