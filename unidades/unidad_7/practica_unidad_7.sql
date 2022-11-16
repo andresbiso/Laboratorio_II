@@ -644,6 +644,26 @@ create or replace package body PA_SHOW_DATOS as
     cursor c_loc is
         select location_id, regional_group
         from location;
+
+    procedure pr_show_dept
+    as
+        l_idx binary_integer;
+        l_loc_dept department.name%type;
+    begin
+        l_idx := t_loc.first;
+
+        while l_idx <= t_loc.last loop
+            dbms_output.put_line(l_idx
+                || ' Departamento: ' || l_loc_dept
+                || ' Región: ' || t_loc(l_idx).loc_reg_grp)
+            l_idx := t_cli.next(l_idx);
+        end loop;
+
+        exception
+            when no_data_found then
+
+    end pr_show_dept;
+
     begin
         for r_loc in c_loc loop
             t_loc(r_loc.location_id).loc_reg_grp := r_loc.regional_group;
