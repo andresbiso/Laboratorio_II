@@ -435,27 +435,53 @@ Si el cliente no existe provocar una excepción.
 */
 
 create or replace package PA_CLIENTES as
+    procedure pr_lista;
 end PA_CLIENTES;
 create or replace package body PA_CLIENTES as
     type tr_clientes is record (
         cli_name customer.name%type,
         cli_id customer.customer_id%type,
         cli_phone customer.phone_number%type,
-        cli_orders number(4)
+        cli_orders number
     );
 
-    type tt_clientes is table of tr_clientes indyex by binary_integer;
+    type tt_clientes is table of tr_clientes index by binary_integer;
 
     t_cli tt_clientes;
 
+    procedure pr_lista
+    as
+
+    l_idx binary_integer;
+
     begin
-        select 
+        l_idx := t_cli.first;
+
+        while l_idx <= t_cli.last loop
+            dbms_output.put_line(l_idx
+            || ' Id: ' || t_cli(l_idx).cli_id
+            || ' Nombre: ' || t_cli(l_idx).cli_name
+            || ' Teléfono: ' || t_cli(l_idx).cli_phone
+            || ' Cantidad de órdenes: ' || t_cli(l_idx).cli_orders);
+        l_idx := t_cli.next(l_idx);
+        end loop;
+
+    end pr_lista;
+
+    begin
+        select c.name, c.customer_id, c.phone_number, count(distinct so.order_id)
         bulk collect into t_cli
-        from
-        where
-        order by name asc
+        from customer c
+        inner join sales_order so
+        on c.customer_id = so.customer_id
+        group by c.name, c.customer_id, c.phone_number
+        order by name asc;
 
 end PA_CLIENTES;
+
+begin
+   PA_CLIENTES.pr_lista();
+end
 /*
 5. Crear un paquete SHOW_DATOS con dos procedimientos públicos:
 Show_Emp y Show_Dept para desplegar los datos de los empleados y de los departamentos.
