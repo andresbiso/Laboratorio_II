@@ -584,6 +584,7 @@ begin
    --PA_CLIENTES.pr_lista('CENTURY SHOP');
    --PA_CLIENTES.pr_ordenes(1);
 end
+
 /*
 5. Crear un paquete SHOW_DATOS con dos procedimientos públicos:
 Show_Emp y Show_Dept para desplegar los datos de los empleados y de los departamentos.
@@ -648,21 +649,54 @@ create or replace package body PA_SHOW_DATOS as
     procedure pr_show_dept
     as
         l_idx binary_integer;
-        l_loc_dept department.name%type;
+
+        cursor c_dept (p_location_id location.location_id%type) is
+            select name
+            from department
+            where location_id = p_location_id;
     begin
         l_idx := t_loc.first;
 
         while l_idx <= t_loc.last loop
-            dbms_output.put_line(l_idx
-                || ' Departamento: ' || l_loc_dept
-                || ' Región: ' || t_loc(l_idx).loc_reg_grp)
-            l_idx := t_cli.next(l_idx);
+            for r_dept in c_dept(l_idx) loop
+                dbms_output.put_line(
+                    ' Departamento: ' || r_dept.name
+                    || ' Región: ' || t_loc(l_idx).loc_reg_grp);
+            end loop;
+            l_idx := t_loc.next(l_idx);
         end loop;
 
         exception
-            when no_data_found then
-
+            when others then
+                dbms_output.put_line('Error inesperado: ' || sqlerrm);
     end pr_show_dept;
+
+    procedure pr_show_emp
+     as
+        l_idx binary_integer;
+
+        cursor c_emp (p_location_id location.location_id%type) is
+            select last_name || ',' || first_name nombre
+            from employee
+            where department_id in (select department_id from department
+            where location_id = p_location_id);
+    begin
+        l_idx := t_loc.first;
+
+        while l_idx <= t_loc.last loop
+            for r_emp in c_emp(l_idx) loop
+                dbms_output.put_line(
+                    'Región: ' || t_loc(l_idx).loc_reg_grp
+                    || ' Empleado: ' || r_emp.nombre
+                );
+            end loop;
+            l_idx := t_loc.next(l_idx);
+        end loop;
+
+        exception
+            when others then
+                dbms_output.put_line('Error inesperado: ' || sqlerrm);
+    end pr_show_emp;
 
     begin
         for r_loc in c_loc loop
@@ -671,5 +705,7 @@ create or replace package body PA_SHOW_DATOS as
 end PA_SHOW_DATOS;
 
 begin
-    dbms_output.put_line(PA_SHOW_DATOS.t_loc);
+    -- dbms_output.put_line(PA_SHOW_DATOS.t_loc);
+    --PA_SHOW_DATOS.pr_show_dept();
+    PA_SHOW_DATOS.pr_show_emp();
 end
